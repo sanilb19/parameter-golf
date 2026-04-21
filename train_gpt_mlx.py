@@ -11,6 +11,7 @@ import json
 import math
 import os
 import pickle
+import subprocess
 import sys
 import time
 import uuid
@@ -35,6 +36,13 @@ COMPUTE_DTYPE = mx.bfloat16
 # ==============================================================================
 # HYPERPARAMETERS
 # ==============================================================================
+SMOKE_PROXY_DEFAULT = (
+    int(os.environ.get("ITERATIONS", 20_000)) <= 200
+    and int(os.environ.get("TRAIN_BATCH_TOKENS", 524_288)) <= 8_192
+    and int(os.environ.get("VAL_BATCH_SIZE", 524_288)) <= 8_192
+)
+
+
 # Default Simple Baseline run:
 # - 9 transformer blocks at width 512
 # - 8 attention heads with 4 KV heads (GQA) and 2x MLP expansion
@@ -74,12 +82,17 @@ class Hyperparameters:
     num_heads: int = int(os.environ.get("NUM_HEADS", 8))
     num_kv_heads: int = int(os.environ.get("NUM_KV_HEADS", 4))
     mlp_mult: int = int(os.environ.get("MLP_MULT", 2))
+    mlp_act: str = os.environ.get("MLP_ACT", "relu2")
     tie_embeddings: bool = bool(int(os.environ.get("TIE_EMBEDDINGS", "1")))
     tied_embed_init_std: float = float(os.environ.get("TIED_EMBED_INIT_STD", 0.005))
     logit_chunk_tokens: int = int(os.environ.get("LOGIT_CHUNK_TOKENS", 0))
-    logit_softcap: float = float(os.environ.get("LOGIT_SOFTCAP", 30.0))
+    logit_softcap: float = float(os.environ.get("LOGIT_SOFTCAP", 20.0))
     rope_base: float = float(os.environ.get("ROPE_BASE", 10000.0))
     qk_gain_init: float = float(os.environ.get("QK_GAIN_INIT", 1.5))
+    parallel_residual_start: int = int(os.environ.get("PARALLEL_RESIDUAL_START", -1))
+    recurrent_layer_start: int = int(os.environ.get("RECURRENT_LAYER_START", -1))
+    recurrent_layer_count: int = int(os.environ.get("RECURRENT_LAYER_COUNT", 0))
+    recurrent_repeat: int = int(os.environ.get("RECURRENT_REPEAT", 0))
 
     # Optimizer. We keep the same per-group defaults as train_gpt.py.
     beta1: float = float(os.environ.get("BETA1", 0.9))
@@ -87,12 +100,14 @@ class Hyperparameters:
     adam_eps: float = float(os.environ.get("ADAM_EPS", 1e-8))
     tied_embed_lr: float = float(os.environ.get("TIED_EMBED_LR", 0.05))
     matrix_lr: float = float(os.environ.get("MATRIX_LR", 0.04))
-    scalar_lr: float = float(os.environ.get("SCALAR_LR", 0.04))
+    scalar_lr: float = float(os.environ.get("SCALAR_LR", 0.02))
     muon_momentum: float = float(os.environ.get("MUON_MOMENTUM", 0.95))
     muon_backend_steps: int = int(os.environ.get("MUON_BACKEND_STEPS", 5))
     muon_momentum_warmup_start: float = float(os.environ.get("MUON_MOMENTUM_WARMUP_START", 0.85))
     muon_momentum_warmup_steps: int = int(os.environ.get("MUON_MOMENTUM_WARMUP_STEPS", 500))
-    grad_clip_norm: float = float(os.environ.get("GRAD_CLIP_NORM", 0.0))
+    grad_clip_norm: float = float(os.environ.get("GRAD_CLIP_NORM", 1.0))
+    proxy_val_batches: int = int(os.environ.get("PROXY_VAL_BATCHES", "2048" if SMOKE_PROXY_DEFAULT else "0"))
+    proxy_skip_quant_eval: bool = bool(int(os.environ.get("PROXY_SKIP_QUANT_EVAL", "1" if SMOKE_PROXY_DEFAULT else "0")))
 
     out_dir: str = os.environ.get("OUT_DIR", "logs")
 
@@ -340,15 +355,26 @@ class CausalSelfAttention(nn.Module):
 
 class MLP(nn.Module):
     # Baseline MLP uses relu^2 instead of GELU/SiLU. It is cheap and works well in this setup.
-    def __init__(self, dim: int, mlp_mult: int):
+    def __init__(self, dim: int, mlp_mult: int, act: str):
         super().__init__()
         hidden = dim * mlp_mult
         self.fc = CastedLinear(dim, hidden)
         self.proj = CastedLinear(hidden, dim)
+        self.act = act
 
     def __call__(self, x: mx.array) -> mx.array:
-        x = nn.relu(self.fc(x))
-        return self.proj(x * x)
+        x = self.fc(x)
+        if self.act == "relu2":
+            x = nn.relu(x)
+            x = x * x
+        elif self.act == "silu":
+            x = nn.silu(x)
+        elif self.act == "silu2":
+            x = nn.silu(x)
+            x = x * x
+        else:
+            raise ValueError(f"Unsupported MLP activation: {self.act}")
+        return self.proj(x)
 
 
 class Block(nn.Module):
@@ -358,23 +384,33 @@ class Block(nn.Module):
         num_heads: int,
         num_kv_heads: int,
         mlp_mult: int,
+        mlp_act: str,
         rope_base: float,
         qk_gain_init: float,
+        parallel_residual: bool,
     ):
         super().__init__()
         self.attn_norm = RMSNormNoWeight()
         self.mlp_norm = RMSNormNoWeight()
         self.attn = CausalSelfAttention(dim, num_heads, num_kv_heads, rope_base, qk_gain_init)
-        self.mlp = MLP(dim, mlp_mult)
+        self.mlp = MLP(dim, mlp_mult, mlp_act)
         self.attn_scale = mx.ones((dim,), dtype=mx.float32)
         self.mlp_scale = mx.ones((dim,), dtype=mx.float32)
         self.resid_mix = mx.array(np.stack((np.ones((dim,), dtype=np.float32), np.zeros((dim,), dtype=np.float32))))
+        self.parallel_residual = parallel_residual
 
     def __call__(self, x: mx.array, x0: mx.array) -> mx.array:
         mix = self.resid_mix.astype(x.dtype)
-        x = mix[0][None, None, :] * x + mix[1][None, None, :] * x0
-        attn_out = self.attn(self.attn_norm(x))
-        x = x + self.attn_scale.astype(x.dtype)[None, None, :] * attn_out
+        x_in = mix[0][None, None, :] * x + mix[1][None, None, :] * x0
+        attn_out = self.attn(self.attn_norm(x_in))
+        if self.parallel_residual:
+            mlp_out = self.mlp(self.mlp_norm(x_in))
+            return (
+                x_in
+                + self.attn_scale.astype(x.dtype)[None, None, :] * attn_out
+                + self.mlp_scale.astype(x.dtype)[None, None, :] * mlp_out
+            )
+        x = x_in + self.attn_scale.astype(x.dtype)[None, None, :] * attn_out
         x = x + self.mlp_scale.astype(x.dtype)[None, None, :] * self.mlp(self.mlp_norm(x))
         return x
 
@@ -385,8 +421,10 @@ class GPT(nn.Module):
     # - decoder half consumes reversed skips with learned skip_weights
     # - tied embeddings for the LM head (the baseline default setup)
     def __init__(self, vocab_size: int, num_layers: int, dim: int, num_heads: int, num_kv_heads: int, mlp_mult: int,
+                 mlp_act: str,
                  logit_chunk_tokens: int, logit_softcap: float, rope_base: float, tied_embed_init_std: float,
-                 qk_gain_init: float):
+                 qk_gain_init: float, parallel_residual_start: int, recurrent_layer_start: int,
+                 recurrent_layer_count: int, recurrent_repeat: int):
         super().__init__()
         if logit_softcap <= 0.0:
             raise ValueError(f"logit_softcap must be positive, got {logit_softcap}")
@@ -399,9 +437,25 @@ class GPT(nn.Module):
         self.num_skip_weights = min(self.num_encoder_layers, self.num_decoder_layers)
         self.skip_weights = mx.ones((self.num_skip_weights, dim), dtype=mx.float32)
         self.blocks = [
-            Block(dim, num_heads, num_kv_heads, mlp_mult, rope_base, qk_gain_init)
+            Block(
+                dim,
+                num_heads,
+                num_kv_heads,
+                mlp_mult,
+                mlp_act,
+                rope_base,
+                qk_gain_init,
+                parallel_residual=(parallel_residual_start >= 0 and i >= parallel_residual_start),
+            )
             for i in range(num_layers)
         ]
+        self.parallel_residual_start = parallel_residual_start
+        self.recurrent_repeat = max(recurrent_repeat, 0)
+        if recurrent_layer_start >= 0 and recurrent_layer_count > 0:
+            recur_end = min(recurrent_layer_start + recurrent_layer_count, num_layers)
+            self.recurrent_block_ids = tuple(range(recurrent_layer_start, recur_end))
+        else:
+            self.recurrent_block_ids = ()
         self.final_norm = RMSNormNoWeight()
 
         for b in self.blocks:
@@ -430,6 +484,9 @@ class GPT(nn.Module):
             if skips:
                 x = x + self.skip_weights[i].astype(x.dtype)[None, None, :] * skips.pop()
             x = self.blocks[self.num_encoder_layers + i](x, x0)
+        for _ in range(self.recurrent_repeat):
+            for idx in self.recurrent_block_ids:
+                x = self.blocks[idx](x, x0)
         return self.final_norm(x)
 
     def loss(self, input_ids: mx.array, target_ids: mx.array) -> mx.array:
@@ -557,6 +614,9 @@ INT8_KEEP_FLOAT_STORE_DTYPE = np.float16
 INT8_PER_ROW_SCALE_DTYPE = np.float16
 INT8_CLIP_PERCENTILE = 99.99984
 INT8_CLIP_Q = INT8_CLIP_PERCENTILE / 100.0
+INT8_MATRIX_STDCLIP_K = float(os.environ.get("INT8_MATRIX_STDCLIP_K", "0.0"))
+INT8_EMBED_STDCLIP_K = float(os.environ.get("INT8_EMBED_STDCLIP_K", "0.0"))
+INT8_VECTOR_STDCLIP_K = float(os.environ.get("INT8_VECTOR_STDCLIP_K", "0.0"))
 
 
 def _np_float32(arr: mx.array) -> np.ndarray:
@@ -572,19 +632,26 @@ def keep_float_array(name: str, arr: mx.array, passthrough_orig_dtypes: dict[str
     return np.ascontiguousarray(np.array(arr, copy=True))
 
 
-def quantize_float_array(arr: mx.array) -> tuple[np.ndarray, np.ndarray]:
+def quantize_float_array(name: str, arr: mx.array) -> tuple[np.ndarray, np.ndarray]:
     f32 = _np_float32(arr)
     if f32.ndim == 2:
         # Matrices get one scale per row, which usually tracks output-channel
         # ranges much better than a single tensor-wide scale.
-        clip_abs = np.quantile(np.abs(f32), INT8_CLIP_Q, axis=1) if f32.size else np.empty((f32.shape[0],), dtype=np.float32)
+        stdclip_k = INT8_EMBED_STDCLIP_K if name == "tok_emb.weight" and INT8_EMBED_STDCLIP_K > 0.0 else INT8_MATRIX_STDCLIP_K
+        if stdclip_k > 0.0:
+            clip_abs = stdclip_k * np.std(f32, axis=1, dtype=np.float32)
+        else:
+            clip_abs = np.quantile(np.abs(f32), INT8_CLIP_Q, axis=1) if f32.size else np.empty((f32.shape[0],), dtype=np.float32)
         clipped = np.clip(f32, -clip_abs[:, None], clip_abs[:, None])
         scale = np.maximum(clip_abs / 127.0, 1.0 / 127.0).astype(np.float32, copy=False)
         q = np.clip(np.round(clipped / scale[:, None]), -127, 127).astype(np.int8, copy=False)
         return np.ascontiguousarray(q), np.ascontiguousarray(scale.astype(INT8_PER_ROW_SCALE_DTYPE, copy=False))
 
     # Vectors / scalars use a simpler per-tensor scale.
-    clip_abs = float(np.quantile(np.abs(f32).reshape(-1), INT8_CLIP_Q)) if f32.size else 0.0
+    if INT8_VECTOR_STDCLIP_K > 0.0:
+        clip_abs = float(INT8_VECTOR_STDCLIP_K * np.std(f32, dtype=np.float32))
+    else:
+        clip_abs = float(np.quantile(np.abs(f32).reshape(-1), INT8_CLIP_Q)) if f32.size else 0.0
     scale = np.array(clip_abs / 127.0 if clip_abs > 0.0 else 1.0, dtype=np.float32)
     q = np.clip(np.round(np.clip(f32, -clip_abs, clip_abs) / scale), -127, 127).astype(np.int8, copy=False)
     return np.ascontiguousarray(q), scale
@@ -620,7 +687,7 @@ def quantize_state_dict_int8(flat_state: dict[str, mx.array]) -> tuple[dict[str,
             continue
 
         stats["num_float_tensors"] += 1
-        q, s = quantize_float_array(arr)
+        q, s = quantize_float_array(name, arr)
         if s.ndim > 0:
             qmeta[name] = {"scheme": "per_row", "axis": 0}
         quantized[name] = q
@@ -779,11 +846,13 @@ def eval_val(
         )
     val_batch_seqs = val_batch_tokens // args.train_seq_len
     total_seqs = (val_tokens.size - 1) // args.train_seq_len
-    total_batches = max((total_seqs + val_batch_seqs - 1) // val_batch_seqs, 1)
+    full_total_batches = max((total_seqs + val_batch_seqs - 1) // val_batch_seqs, 1)
+    total_batches = min(full_total_batches, args.proxy_val_batches) if args.proxy_val_batches > 0 else full_total_batches
     total_loss_sum = 0.0
     total_tokens = 0.0
     total_bytes = 0.0
-    for batch_idx, batch_seq_start in enumerate(range(0, total_seqs, val_batch_seqs), start=1):
+    capped_total_seqs = min(total_seqs, total_batches * val_batch_seqs)
+    for batch_idx, batch_seq_start in enumerate(range(0, capped_total_seqs, val_batch_seqs), start=1):
         batch_seq_end = min(batch_seq_start + val_batch_seqs, total_seqs)
         raw_start = batch_seq_start * args.train_seq_len
         raw_end = batch_seq_end * args.train_seq_len + 1
@@ -808,6 +877,8 @@ def eval_val(
             batch_idx == 1 or batch_idx == total_batches or batch_idx % 25 == 0
         ):
             log_fn(f"val_progress:{batch_idx}/{total_batches}")
+    if log_fn is not None and full_total_batches != total_batches:
+        log_fn(f"proxy_val_coverage:{total_batches}/{full_total_batches}")
     val_loss = total_loss_sum / total_tokens
     bits_per_token = val_loss / math.log(2.0)
     val_bpb = bits_per_token * (total_tokens / total_bytes)
@@ -892,11 +963,16 @@ def main() -> None:
         num_heads=args.num_heads,
         num_kv_heads=args.num_kv_heads,
         mlp_mult=args.mlp_mult,
+        mlp_act=args.mlp_act,
         logit_chunk_tokens=args.logit_chunk_tokens,
         logit_softcap=args.logit_softcap,
         rope_base=args.rope_base,
         tied_embed_init_std=args.tied_embed_init_std,
         qk_gain_init=args.qk_gain_init,
+        parallel_residual_start=args.parallel_residual_start,
+        recurrent_layer_start=args.recurrent_layer_start,
+        recurrent_layer_count=args.recurrent_layer_count,
+        recurrent_repeat=args.recurrent_repeat,
     )
     opt = SplitOptimizers(model, args)
 
@@ -937,6 +1013,13 @@ def main() -> None:
         f"seq_len:{args.train_seq_len} tie_embeddings:{args.tie_embeddings}"
     )
     log(
+        f"arch_knobs:qk_gain_init:{args.qk_gain_init} logit_softcap:{args.logit_softcap} "
+        f"mlp_act:{args.mlp_act} "
+        f"parallel_residual_start:{args.parallel_residual_start} "
+        f"recurrent_layer_start:{args.recurrent_layer_start} "
+        f"recurrent_layer_count:{args.recurrent_layer_count} recurrent_repeat:{args.recurrent_repeat}"
+    )
+    log(
         f"iterations:{args.iterations} train_batch_tokens:{args.train_batch_tokens} grad_accum_steps:{args.grad_accum_steps} "
         f"microbatch_tokens:{args.microbatch_tokens} microbatch_batch_size:{args.microbatch_tokens // args.train_seq_len} "
         f"val_batch_size:{args.val_batch_size} "
@@ -950,7 +1033,16 @@ def main() -> None:
         f"muon_momentum:{args.muon_momentum} muon_steps:{args.muon_backend_steps}"
     )
     log(f"val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path={args.tokenizer_path}")
+    if args.proxy_val_batches > 0 or args.proxy_skip_quant_eval:
+        log(
+            f"proxy_eval:enabled val_batches:{args.proxy_val_batches} "
+            f"skip_quant_roundtrip:{args.proxy_skip_quant_eval}"
+        )
     log(f"compute_dtype:{COMPUTE_DTYPE} compile:True")
+    log(
+        f"quant_clip:matrix_stdclip_k:{INT8_MATRIX_STDCLIP_K} "
+        f"embed_stdclip_k:{INT8_EMBED_STDCLIP_K} vector_stdclip_k:{INT8_VECTOR_STDCLIP_K}"
+    )
     log(
         f"dtypes tok_emb:{model.tok_emb.weight.dtype} "
         f"linear_weight:{model.blocks[0].attn.c_q.weight.dtype} "
@@ -1081,6 +1173,11 @@ def main() -> None:
         f"(payload:{quant_stats['int8_payload_bytes']} raw_pickle:{quant_serialized_bytes} payload_ratio:{ratio:.2f}x)"
     )
 
+    if args.proxy_skip_quant_eval:
+        log("proxy_skip_quant_eval:1")
+        log(f"proxy_final_exact val_loss:{val_loss:.8f} val_bpb:{val_bpb:.8f}")
+        return
+
     with quant_path.open("rb") as f:
         quant_blob_disk = f.read()
     quant_flat = dequantize_state_dict_int8(pickle.loads(zlib.decompress(quant_blob_disk)))
@@ -1101,4 +1198,10 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    try:
+        from top5_learning_suite import maybe_run_top5_learning_suite
+    except ImportError:
+        maybe_run_top5_learning_suite = None
+    if maybe_run_top5_learning_suite is not None and maybe_run_top5_learning_suite(Path(__file__), sys.executable, subprocess.run):
+        raise SystemExit(0)
     main()

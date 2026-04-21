@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.sanilbaweja.parameter-golf.overnight-round5</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/zsh</string>
+		<string>/Users/sanilbaweja/Projects/parameter-golf/scripts/run_overnight_local_ab_round5.sh</string>
+	</array>
+	<key>RunAtLoad</key>
+	<false/>
+	<key>StandardErrorPath</key>
+	<string>/Users/sanilbaweja/Projects/parameter-golf/logs/overnight_local_ab_round5/launchd.stderr.log</string>
+	<key>StandardOutPath</key>
+	<string>/Users/sanilbaweja/Projects/parameter-golf/logs/overnight_local_ab_round5/launchd.stdout.log</string>
+	<key>StartCalendarInterval</key>
+	<dict>
+		<key>Hour</key>
+		<integer>0</integer>
+		<key>Minute</key>
+		<integer>38</integer>
+	</dict>
+	<key>WorkingDirectory</key>
+	<string>/Users/sanilbaweja/Projects/parameter-golf</string>
+</dict>
+</plist>
