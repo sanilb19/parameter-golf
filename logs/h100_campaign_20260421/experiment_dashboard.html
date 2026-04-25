@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>H100 Campaign Dashboard</title>
+  <style>
+    :root {
+      --bg: #f6f2e9;
+      --ink: #1d1d1b;
+      --muted: #655f57;
+      --card: #fffdf8;
+      --line: #d8cfc1;
+      --accent: #0f766e;
+      --warn: #92400e;
+    }
+    body {
+      margin: 0;
+      font-family: "Iowan Old Style", "Palatino Linotype", serif;
+      background: linear-gradient(180deg, #efe7d8 0%, var(--bg) 42%, #f9f6ef 100%);
+      color: var(--ink);
+    }
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 20px 56px;
+    }
+    h1, h2, h3 {
+      margin: 0 0 12px;
+      line-height: 1.05;
+    }
+    p {
+      color: var(--muted);
+      margin: 0 0 14px;
+    }
+    .cards, .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin: 22px 0 28px;
+    }
+    .card, .section {
+      min-width: 0;
+      background: rgba(255, 253, 248, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(29, 29, 27, 0.05);
+    }
+    .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .value {
+      font-size: 26px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 250, 241, 0.78);
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #fff9ef;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+    tbody tr:nth-child(even) {
+      background: rgba(255, 251, 244, 0.74);
+    }
+    .cell-text {
+      display: inline-block;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .callout {
+      border-left: 4px solid var(--accent);
+      padding-left: 12px;
+      margin: 16px 0 0;
+    }
+    .warning {
+      border-left-color: var(--warn);
+    }
+    .chart {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #fffaf1;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+    .muted {
+      color: var(--muted);
+    }
+    @media (max-width: 900px) {
+      main {
+        padding: 22px 14px 40px;
+      }
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .card, .section {
+        padding: 15px;
+      }
+      th, td {
+        font-size: 12px;
+        padding: 9px 7px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>1xH100 Screening Campaign</h1>
+    <p>Decision dashboard for the attached H100 screening plan. Throughput engineering remains an explicit first-class workstream here, not a side quest.</p>
+    <div class="cards">
+      <div class="card"><div class="label">Total runs</div><div class="value">21</div></div>
+      <div class="card"><div class="label">Completed runs</div><div class="value">21</div></div>
+      <div class="card"><div class="label">Failed runs</div><div class="value">0</div></div>
+      <div class="card"><div class="label">Best val_bpb</div><div class="value">1.299712</div></div>
+      <div class="card"><div class="label">Best compact run</div><div class="value">h100_silu_embed004_dim384_sp1024</div></div>
+      <div class="card"><div class="label">Promoted recipe</div><div class="value">h100_tp_gradacc4_gc10_seed1337_r2</div></div>
+      <div class="card"><div class="label">Baseline anchor</div><div class="value">h100_baseline_sp1024</div></div>
+      <div class="card"><div class="label">Budget note</div><div class="value">$30.36 after phase_1_knobs_b</div></div>
+    </div>
+
+    <section class="section">
+      <h2>Narrative Summary</h2>
+      <p>The current baseline anchor is <strong>h100_baseline_sp1024</strong> at <strong>1.342170</strong> `val_bpb`. The current promoted recipe is <strong>h100_tp_gradacc4_gc10_seed1337_r2</strong> and it has at least one same-recipe replication.</p>
+      <p>Throughput engineering is still on-plan. The current best throughput-led candidate is <strong>h100_tp_gradacc4_gc10_seed1337_r2</strong> with <strong>1626354.81</strong> global tokens per second and <strong>1.300142</strong> `val_bpb`.</p>
+      <p class="callout">Noise estimate from baseline-style replications: <strong></strong>. Automatic keep threshold from the plan: <strong></strong>. Screening should stop soon if the promoted recipe confirms on a rerun.</p>
+    </section>
+
+    <div class="grid">
+      <section class="section">
+        <h2>Best Raw Quality</h2>
+        <div class='table-wrap'><table><thead><tr><th>run_id</th><th>category</th><th>val_bpb</th><th>delta_vs_baseline</th><th>tok_s</th><th>description</th></tr></thead><tbody><tr><td><span class='cell-text'>h100_tp_gradacc4_gc10_muon0975_seed1337</span></td><td><span class='cell-text'>hparam_optimizer</span></td><td><span class='cell-text'>1.299712</span></td><td><span class='cell-text'>-0.042458</span></td><td><span class='cell-text'>1610864.29</span></td><td><span class='cell-text'>Grad accum 4 plus grad clip 1.0 plus muon momentum 0.975</span></td></tr><tr><td><span class='cell-text'>h100_tp_gradacc4_gc10_seed1337_r2</span></td><td><span class='cell-text'>throughput_engineering</span></td><td><span class='cell-text'>1.300142</span></td><td><span class='cell-text'>-0.042028</span></td><td><span class='cell-text'>1626354.81</span></td><td><span class='cell-text'>Grad accum 4 plus grad clip 1.0 clean rerun</span></td></tr><tr><td><span class='cell-text'>h100_tp_gradacc4_gc10_seed2024</span></td><td><span class='cell-text'>throughput_engineering</span></td><td><span class='cell-text'>1.307945</span></td><td><span class='cell-text'>-0.034225</span></td><td><span class='cell-text'>1472595.01</span></td><td><span class='cell-text'>Grad accum 4 plus grad clip 1.0 second-seed confirmation</span></td></tr><tr><td><span class='cell-text'>h100_tp_gradacc4_gc10</span></td><td><span class='cell-text'>throughput_engineering</span></td><td><span class='cell-text'>1.308132</span></td><td><span class='cell-text'>-0.034038</span></td><td><span class='cell-text'>1472016.17</span></td><td><span class='cell-text'>Grad accum steps 4 with grad clip 1.0</span></td></tr><tr><td><span class='cell-text'>h100_muon_momentum_0975_seed1337_r2</span></td><td><span class='cell-text'>hparam_optimizer</span></td><td><span class='cell-text'>1.317526</span></td><td><span class='cell-text'>-0.024644</span></td><td><span class='cell-text'>1333116.35</span></td><td><span class='cell-text'>Muon momentum 0.975 clean rerun</span></td></tr></tbody></table></div>
+      </section>
+      <section class="section">
+        <h2>Best Delta Vs Baseline</h2>
+        <div class='table-wrap'><table><thead><tr><th>run_id</th><th>category</th><th>delta_vs_baseline</th><th>val_bpb</th><th>tok_s</th><th>decision</th></tr></thead><tbody><tr><td><span class='cell-text'>h100_tp_gradacc4_gc10_muon0975_seed1337</span></td><td><span class='cell-text'>hparam_optimizer</span></td><td><span class='cell-text'>-0.042458</span></td><td><span class='cell-text'>1.299712</span></td><td><span class='cell-text'>1610864.29</span></td><td><span class='cell-text'>hold</span></td></tr><tr><td><span class='cell-text'>h100_tp_gradacc4_gc10_seed1337_r2</span></td><td><span class='cell-text'>throughput_engineering</span></td><td><span class='cell-text'>-0.042028</span></td><td><span class='cell-text'>1.300142</span></td><td><span class='cell-text'>1626354.81</span></td><td><span class='cell-text'>promote</span></td></tr><tr><td><span class='cell-text'>h100_tp_gradacc4_gc10_seed2024</span></td><td><span class='cell-text'>throughput_engineering</span></td><td><span class='cell-text'>-0.034225</span></td><td><span class='cell-text'>1.307945</span></td><td><span class='cell-text'>1472595.01</span></td><td><span class='cell-text'>confirm</span></td></tr><tr><td><span class='cell-text'>h100_tp_gradacc4_gc10</span></td><td><span class='cell-text'>throughput_engineering</span></td><td><span class='cell-text'>-0.034038</span></td><td><span class='cell-text'>1.308132</span></td><td><span class='cell-text'>1472016.17</span></td><td><span class='cell-text'>promote</span></td></tr><tr><td><span class='cell-text'>h100_muon_momentum_0975_seed1337_r2</span></td><td><span class='cell-text'>hparam_optimizer</span></td><td><span class='cell-text'>-0.024644</span></td><td><span class='cell-text'>1.317526</span></td><td><span class='cell-text'>1333116.35</span></td><td><span class='cell-text'>keep_alt</span></td></tr></tbody></table></div>
+      </section>
+    </div>
+
+    <div class="grid">
+      <section class="section">
+        <h2>Pareto Frontier</h2>
+        <div class='table-wrap'><table><thead><tr><th>run_id</th><th>artifact_bytes</th><th>val_bpb</th><th>tok_s</th><th>category</th></tr></thead><tbody><tr><td><span class='cell-text'>h100_silu_embed004_dim384_sp1024</span></td><td><span class='cell-text'>7,798,997</span></td><td><span class='cell-text'>1.384210</span></td><td><span class='cell-text'>1093154.85</span></td><td><span class='cell-text'>architecture_compact</span></td></tr><tr><td><span class='cell-text'>h100_tp_batch1024k_gc10</span></td><td><span class='cell-text'>11,965,352</span></td><td><span class='cell-text'>1.338948</span></td><td><span class='cell-text'>1560868.72</span></td><td><span class='cell-text'>throughput_engineering</span></td></tr><tr><td><span class='cell-text'>h100_tp_batch786k_gc10</span></td><td><span class='cell-text'>12,681,186</span></td><td><span class='cell-text'>1.325656</span></td><td><span class='cell-text'>1446152.15</span></td><td><span class='cell-text'>throughput_engineering</span></td></tr><tr><td><span class='cell-text'>h100_tp_gradacc4_gc10</span></td><td><span class='cell-text'>14,411,432</span></td><td><span class='cell-text'>1.308132</span></td><td><span class='cell-text'>1472016.17</span></td><td><span class='cell-text'>throughput_engineering</span></td></tr><tr><td><span class='cell-text'>h100_tp_gradacc4_gc10_seed2024</span></td><td><span class='cell-text'>14,455,311</span></td><td><span class='cell-text'>1.307945</span></td><td><span class='cell-text'>1472595.01</span></td><td><span class='cell-text'>throughput_engineering</span></td></tr><tr><td><span class='cell-text'>h100_tp_gradacc4_gc10_seed1337_r2</span></td><td><span class='cell-text'>14,785,037</span></td><td><span class='cell-text'>1.300142</span></td><td><span class='cell-text'>1626354.81</span></td><td><span class='cell-text'>throughput_engineering</span></td></tr><tr><td><span class='cell-text'>h100_tp_gradacc4_gc10_muon0975_seed1337</span></td><td><span class='cell-text'>15,513,390</span></td><td><span class='cell-text'>1.299712</span></td><td><span class='cell-text'>1610864.29</span></td><td><span class='cell-text'>hparam_optimizer</span></td></tr></tbody></table></div>
+      </section>
+      <section class="section">
+        <h2>Replications</h2>
+        <div class='table-wrap'><table><thead><tr><th>recipe</th><th>n</th><th>mean</th><th>std</th><th>min</th><th>max</th><th>runs</th></tr></thead><tbody><tr><td><span class='cell-text'>GRAD_ACCUM_STEPS=4, GRAD_CLIP_NORM=1.0, SEED=1337</span></td><td><span class='cell-text'>2</span></td><td><span class='cell-text'>1.304137</span></td><td><span class='cell-text'>0.003995</span></td><td><span class='cell-text'>1.300142</span></td><td><span class='cell-text'>1.308132</span></td><td><span class='cell-text'>h100_tp_gradacc4_gc10, h100_tp_gradacc4_gc10_seed1337_r2</span></td></tr><tr><td><span class='cell-text'>MUON_MOMENTUM=0.975, SEED=1337</span></td><td><span class='cell-text'>2</span></td><td><span class='cell-text'>1.324967</span></td><td><span class='cell-text'>0.007441</span></td><td><span class='cell-text'>1.317526</span></td><td><span class='cell-text'>1.332408</span></td><td><span class='cell-text'>h100_muon_momentum_0975, h100_muon_momentum_0975_seed1337_r2</span></td></tr></tbody></table></div>
+      </section>
+    </div>
+
+    <div class="grid">
+      <section class="section">
+        <h2>Bytes Vs Quality</h2>
+        
+<svg viewBox="0 0 520 260" class="chart" role="img" aria-label="bytes_total_int8_zlib vs val_bpb">
+  <line x1="36" y1="224" x2="484" y2="224" stroke="#b7ab97" />
+  <line x1="36" y1="36" x2="36" y2="224" stroke="#b7ab97" />
+  <text x="260.0" y="252" text-anchor="middle" fill="#655f57">bytes_total_int8_zlib</text>
+  <text x="14" y="130.0" text-anchor="middle" fill="#655f57" transform="rotate(-90 14 130.0)">val_bpb</text>
+  <text x="36" y="242" fill="#655f57">7798997.00</text>
+  <text x="484" y="242" text-anchor="end" fill="#655f57">15513390.00</text>
+  <text x="28" y="40" text-anchor="end" fill="#655f57">1.3842</text>
+  <text x="28" y="228" text-anchor="end" fill="#655f57">1.2997</text>
+  <circle cx="339.9" cy="129.5" r="5" fill="#0f766e" opacity="0.78"><title>h100_baseline_sp1024 (13031340.00, 1.342170)</title></circle><circle cx="346.7" cy="107.7" r="5" fill="#0f766e" opacity="0.78"><title>h100_silu_sp1024 (13149507.00, 1.351970)</title></circle><circle cx="349.7" cy="131.4" r="5" fill="#0f766e" opacity="0.78"><title>h100_silu_embed004_sp1024 (13200933.00, 1.341348)</title></circle><circle cx="36.0" cy="36.0" r="5" fill="#0f766e" opacity="0.78"><title>h100_silu_embed004_dim384_sp1024 (7798997.00, 1.384210)</title></circle><circle cx="337.5" cy="126.5" r="5" fill="#0f766e" opacity="0.78"><title>h100_baseline_sp1024_seed1337_r2 (12991252.00, 1.343524)</title></circle><circle cx="345.8" cy="138.8" r="5" fill="#0f766e" opacity="0.78"><title>h100_baseline_sp1024_seed2024 (13133275.00, 1.337999)</title></circle><circle cx="355.0" cy="127.6" r="5" fill="#0f766e" opacity="0.78"><title>h100_qk_gain_125 (13291861.00, 1.343021)</title></circle><circle cx="351.6" cy="132.1" r="5" fill="#0f766e" opacity="0.78"><title>h100_qk_gain_175 (13234201.00, 1.340999)</title></circle><circle cx="343.2" cy="145.3" r="5" fill="#0f766e" opacity="0.78"><title>h100_scalar_lr_003 (13088272.00, 1.335093)</title></circle><circle cx="347.0" cy="155.3" r="5" fill="#0f766e" opacity="0.78"><title>h100_grad_clip_10 (13153769.00, 1.330568)</title></circle><circle cx="319.5" cy="166.3" r="5" fill="#0f766e" opacity="0.78"><title>h100_tp_batch786k_gc10 (12681186.00, 1.325656)</title></circle><circle cx="278.0" cy="136.7" r="5" fill="#0f766e" opacity="0.78"><title>h100_tp_batch1024k_gc10 (11965352.00, 1.338948)</title></circle><circle cx="420.0" cy="205.3" r="5" fill="#0f766e" opacity="0.78"><title>h100_tp_gradacc4_gc10 (14411432.00, 1.308132)</title></circle><circle cx="340.5" cy="118.4" r="5" fill="#0f766e" opacity="0.78"><title>h100_logit_softcap_20 (13042528.00, 1.347154)</title></circle><circle cx="342.9" cy="122.4" r="5" fill="#0f766e" opacity="0.78"><title>h100_logit_softcap_40 (13083473.00, 1.345383)</title></circle><circle cx="380.6" cy="151.3" r="5" fill="#0f766e" opacity="0.78"><title>h100_muon_momentum_0975 (13732512.00, 1.332408)</title></circle><circle cx="340.0" cy="139.5" r="5" fill="#0f766e" opacity="0.78"><title>h100_muon_warmup_1000 (13034156.00, 1.337686)</title></circle><circle cx="441.7" cy="223.0" r="5" fill="#0f766e" opacity="0.78"><title>h100_tp_gradacc4_gc10_seed1337_r2 (14785037.00, 1.300142)</title></circle><circle cx="445.9" cy="184.4" r="5" fill="#0f766e" opacity="0.78"><title>h100_muon_momentum_0975_seed1337_r2 (14857373.00, 1.317526)</title></circle><circle cx="422.6" cy="205.7" r="5" fill="#0f766e" opacity="0.78"><title>h100_tp_gradacc4_gc10_seed2024 (14455311.00, 1.307945)</title></circle><circle cx="484.0" cy="224.0" r="5" fill="#0f766e" opacity="0.78"><title>h100_tp_gradacc4_gc10_muon0975_seed1337 (15513390.00, 1.299712)</title></circle>
+</svg>
+
+      </section>
+      <section class="section">
+        <h2>Step Time Vs Quality</h2>
+        
+<svg viewBox="0 0 520 260" class="chart" role="img" aria-label="step_avg_ms vs val_bpb">
+  <line x1="36" y1="224" x2="484" y2="224" stroke="#b7ab97" />
+  <line x1="36" y1="36" x2="36" y2="224" stroke="#b7ab97" />
+  <text x="260.0" y="252" text-anchor="middle" fill="#655f57">step_avg_ms</text>
+  <text x="14" y="130.0" text-anchor="middle" fill="#655f57" transform="rotate(-90 14 130.0)">val_bpb</text>
+  <text x="36" y="242" fill="#655f57">322.37</text>
+  <text x="484" y="242" text-anchor="end" fill="#655f57">671.79</text>
+  <text x="28" y="40" text-anchor="end" fill="#655f57">1.3842</text>
+  <text x="28" y="228" text-anchor="end" fill="#655f57">1.2997</text>
+  <circle cx="267.7" cy="129.5" r="5" fill="#0f766e" opacity="0.78"><title>h100_baseline_sp1024 (503.09, 1.342170)</title></circle><circle cx="270.9" cy="107.7" r="5" fill="#0f766e" opacity="0.78"><title>h100_silu_sp1024 (505.59, 1.351970)</title></circle><circle cx="250.0" cy="131.4" r="5" fill="#0f766e" opacity="0.78"><title>h100_silu_embed004_sp1024 (489.30, 1.341348)</title></circle><circle cx="237.6" cy="36.0" r="5" fill="#0f766e" opacity="0.78"><title>h100_silu_embed004_dim384_sp1024 (479.61, 1.384210)</title></circle><circle cx="277.2" cy="126.5" r="5" fill="#0f766e" opacity="0.78"><title>h100_baseline_sp1024_seed1337_r2 (510.48, 1.343524)</title></circle><circle cx="256.8" cy="138.8" r="5" fill="#0f766e" opacity="0.78"><title>h100_baseline_sp1024_seed2024 (494.55, 1.337999)</title></circle><circle cx="249.2" cy="127.6" r="5" fill="#0f766e" opacity="0.78"><title>h100_qk_gain_125 (488.63, 1.343021)</title></circle><circle cx="247.5" cy="132.1" r="5" fill="#0f766e" opacity="0.78"><title>h100_qk_gain_175 (487.36, 1.340999)</title></circle><circle cx="259.3" cy="145.3" r="5" fill="#0f766e" opacity="0.78"><title>h100_scalar_lr_003 (496.51, 1.335093)</title></circle><circle cx="214.6" cy="155.3" r="5" fill="#0f766e" opacity="0.78"><title>h100_grad_clip_10 (461.65, 1.330568)</title></circle><circle cx="319.9" cy="166.3" r="5" fill="#0f766e" opacity="0.78"><title>h100_tp_batch786k_gc10 (543.81, 1.325656)</title></circle><circle cx="484.0" cy="136.7" r="5" fill="#0f766e" opacity="0.78"><title>h100_tp_batch1024k_gc10 (671.79, 1.338948)</title></circle><circle cx="79.3" cy="205.3" r="5" fill="#0f766e" opacity="0.78"><title>h100_tp_gradacc4_gc10 (356.17, 1.308132)</title></circle><circle cx="264.0" cy="118.4" r="5" fill="#0f766e" opacity="0.78"><title>h100_logit_softcap_20 (500.20, 1.347154)</title></circle><circle cx="284.5" cy="122.4" r="5" fill="#0f766e" opacity="0.78"><title>h100_logit_softcap_40 (516.19, 1.345383)</title></circle><circle cx="239.4" cy="151.3" r="5" fill="#0f766e" opacity="0.78"><title>h100_muon_momentum_0975 (481.04, 1.332408)</title></circle><circle cx="198.6" cy="139.5" r="5" fill="#0f766e" opacity="0.78"><title>h100_muon_warmup_1000 (449.17, 1.337686)</title></circle><circle cx="36.0" cy="223.0" r="5" fill="#0f766e" opacity="0.78"><title>h100_tp_gradacc4_gc10_seed1337_r2 (322.37, 1.300142)</title></circle><circle cx="126.9" cy="184.4" r="5" fill="#0f766e" opacity="0.78"><title>h100_muon_momentum_0975_seed1337_r2 (393.28, 1.317526)</title></circle><circle cx="79.2" cy="205.7" r="5" fill="#0f766e" opacity="0.78"><title>h100_tp_gradacc4_gc10_seed2024 (356.03, 1.307945)</title></circle><circle cx="40.0" cy="224.0" r="5" fill="#0f766e" opacity="0.78"><title>h100_tp_gradacc4_gc10_muon0975_seed1337 (325.47, 1.299712)</title></circle>
+</svg>
+
+      </section>
+    </div>
+
+    <section class="section">
+      <h2>Key Sweeps</h2>
+      <p class="muted">Grouped bars show the best `val_bpb` reached for each tested value relative to the baseline anchor.</p>
+      
+<svg viewBox="0 0 600 260" class="chart" role="img" aria-label="Sweep deltas vs baseline">
+  <line x1="36" y1="129.5" x2="564" y2="129.5" stroke="#655f57" stroke-dasharray="4 4" />
+  <line x1="36" y1="36" x2="36" y2="224" stroke="#b7ab97" />
+  <line x1="36" y1="224" x2="564" y2="224" stroke="#b7ab97" />
+  <text x="300.0" y="258" text-anchor="middle" fill="#655f57">best val_bpb for tested values</text>
+  <text x="48.0" y="18" text-anchor="middle" fill="#655f57">GRAD_ACCUM_STEPS</text><text x="112.0" y="18" text-anchor="middle" fill="#655f57">GRAD_CLIP_NORM</text><text x="194.0" y="18" text-anchor="middle" fill="#655f57">LOGIT_SOFTCAP</text><text x="276.0" y="18" text-anchor="middle" fill="#655f57">MLP_ACT</text><text x="340.0" y="18" text-anchor="middle" fill="#655f57">MODEL_DIM</text>
+  <rect x="36.0" y="129.5" width="24" height="94.5" fill="#0f766e" opacity="0.82"><title>GRAD_ACCUM_STEPS 4 delta -0.042458</title></rect><rect x="100.0" y="129.5" width="24" height="94.5" fill="#0f766e" opacity="0.82"><title>GRAD_CLIP_NORM 1.0 delta -0.042458</title></rect><rect x="164.0" y="118.4" width="24" height="11.1" fill="#b45309" opacity="0.82"><title>LOGIT_SOFTCAP 20 delta 0.004983</title></rect><rect x="200.0" y="122.4" width="24" height="7.1" fill="#b45309" opacity="0.82"><title>LOGIT_SOFTCAP 40 delta 0.003212</title></rect><rect x="264.0" y="129.5" width="24" height="1.8" fill="#0f766e" opacity="0.82"><title>MLP_ACT silu delta -0.000822</title></rect><rect x="328.0" y="36.0" width="24" height="93.5" fill="#b45309" opacity="0.82"><title>MODEL_DIM 384 delta 0.042040</title></rect>
+  <text x="48.0" y="248" text-anchor="middle" fill="#655f57" font-size="10">4</text><text x="112.0" y="248" text-anchor="middle" fill="#655f57" font-size="10">1.0</text><text x="176.0" y="248" text-anchor="middle" fill="#655f57" font-size="10">20</text><text x="212.0" y="248" text-anchor="middle" fill="#655f57" font-size="10">40</text><text x="276.0" y="248" text-anchor="middle" fill="#655f57" font-size="10">silu</text><text x="340.0" y="248" text-anchor="middle" fill="#655f57" font-size="10">384</text>
+</svg>
+
+    </section>
+
+    <div class="grid">
+      <section class="section">
+        <h2>Category Summary</h2>
+        <div class='table-wrap'><table><thead><tr><th>category</th><th>runs</th><th>best_run</th><th>best_val_bpb</th><th>best_tok_s</th></tr></thead><tbody><tr><td><span class='cell-text'>architecture_compact</span></td><td><span class='cell-text'>1</span></td><td><span class='cell-text'>h100_silu_embed004_dim384_sp1024</span></td><td><span class='cell-text'>1.384210</span></td><td><span class='cell-text'>1093154.85</span></td></tr><tr><td><span class='cell-text'>architecture_variant</span></td><td><span class='cell-text'>1</span></td><td><span class='cell-text'>h100_silu_sp1024</span></td><td><span class='cell-text'>1.351970</span></td><td><span class='cell-text'>1036982.54</span></td></tr><tr><td><span class='cell-text'>confirmation</span></td><td><span class='cell-text'>3</span></td><td><span class='cell-text'>h100_baseline_sp1024_seed2024</span></td><td><span class='cell-text'>1.337999</span></td><td><span class='cell-text'>1060131.43</span></td></tr><tr><td><span class='cell-text'>hparam_optimizer</span></td><td><span class='cell-text'>9</span></td><td><span class='cell-text'>h100_tp_gradacc4_gc10_muon0975_seed1337</span></td><td><span class='cell-text'>1.299712</span></td><td><span class='cell-text'>1610864.29</span></td></tr><tr><td><span class='cell-text'>hparam_schedule</span></td><td><span class='cell-text'>2</span></td><td><span class='cell-text'>h100_logit_softcap_40</span></td><td><span class='cell-text'>1.345383</span></td><td><span class='cell-text'>1048156.74</span></td></tr><tr><td><span class='cell-text'>throughput_engineering</span></td><td><span class='cell-text'>5</span></td><td><span class='cell-text'>h100_tp_gradacc4_gc10_seed1337_r2</span></td><td><span class='cell-text'>1.300142</span></td><td><span class='cell-text'>1626354.81</span></td></tr></tbody></table></div>
+      </section>
+      <section class="section">
+        <h2>Decision Intelligence</h2>
+        <div class='table-wrap'><table><thead><tr><th>axis</th><th>value</th><th>best_run</th><th>best_val_bpb</th><th>delta_vs_baseline</th><th>tok_s</th><th>assessment</th></tr></thead><tbody><tr><td><span class='cell-text'>GRAD_ACCUM_STEPS</span></td><td><span class='cell-text'>4</span></td><td><span class='cell-text'>h100_tp_gradacc4_gc10_muon0975_seed1337</span></td><td><span class='cell-text'>1.299712</span></td><td><span class='cell-text'>-0.042458</span></td><td><span class='cell-text'>1610864.29</span></td><td><span class='cell-text'>inconclusive</span></td></tr><tr><td><span class='cell-text'>GRAD_CLIP_NORM</span></td><td><span class='cell-text'>1.0</span></td><td><span class='cell-text'>h100_tp_gradacc4_gc10_muon0975_seed1337</span></td><td><span class='cell-text'>1.299712</span></td><td><span class='cell-text'>-0.042458</span></td><td><span class='cell-text'>1610864.29</span></td><td><span class='cell-text'>inconclusive</span></td></tr><tr><td><span class='cell-text'>LOGIT_SOFTCAP</span></td><td><span class='cell-text'>20</span></td><td><span class='cell-text'>h100_logit_softcap_20</span></td><td><span class='cell-text'>1.347154</span></td><td><span class='cell-text'>0.004983</span></td><td><span class='cell-text'>1048156.74</span></td><td><span class='cell-text'>likely harmful</span></td></tr><tr><td><span class='cell-text'>LOGIT_SOFTCAP</span></td><td><span class='cell-text'>40</span></td><td><span class='cell-text'>h100_logit_softcap_40</span></td><td><span class='cell-text'>1.345383</span></td><td><span class='cell-text'>0.003212</span></td><td><span class='cell-text'>1015688.02</span></td><td><span class='cell-text'>likely harmful</span></td></tr><tr><td><span class='cell-text'>MLP_ACT</span></td><td><span class='cell-text'>silu</span></td><td><span class='cell-text'>h100_silu_embed004_sp1024</span></td><td><span class='cell-text'>1.341348</span></td><td><span class='cell-text'>-0.000822</span></td><td><span class='cell-text'>1071506.23</span></td><td><span class='cell-text'>inconclusive</span></td></tr><tr><td><span class='cell-text'>MODEL_DIM</span></td><td><span class='cell-text'>384</span></td><td><span class='cell-text'>h100_silu_embed004_dim384_sp1024</span></td><td><span class='cell-text'>1.384210</span></td><td><span class='cell-text'>0.042040</span></td><td><span class='cell-text'>1093154.85</span></td><td><span class='cell-text'>likely harmful</span></td></tr><tr><td><span class='cell-text'>MUON_MOMENTUM</span></td><td><span class='cell-text'>0.975</span></td><td><span class='cell-text'>h100_tp_gradacc4_gc10_muon0975_seed1337</span></td><td><span class='cell-text'>1.299712</span></td><td><span class='cell-text'>-0.042458</span></td><td><span class='cell-text'>1610864.29</span></td><td><span class='cell-text'>inconclusive</span></td></tr><tr><td><span class='cell-text'>MUON_MOMENTUM_WARMUP_STEPS</span></td><td><span class='cell-text'>1000</span></td><td><span class='cell-text'>h100_muon_warmup_1000</span></td><td><span class='cell-text'>1.337686</span></td><td><span class='cell-text'>-0.004484</span></td><td><span class='cell-text'>1167237.35</span></td><td><span class='cell-text'>inconclusive</span></td></tr><tr><td><span class='cell-text'>NUM_HEADS</span></td><td><span class='cell-text'>8</span></td><td><span class='cell-text'>h100_silu_embed004_dim384_sp1024</span></td><td><span class='cell-text'>1.384210</span></td><td><span class='cell-text'>0.042040</span></td><td><span class='cell-text'>1093154.85</span></td><td><span class='cell-text'>likely harmful</span></td></tr><tr><td><span class='cell-text'>NUM_KV_HEADS</span></td><td><span class='cell-text'>4</span></td><td><span class='cell-text'>h100_silu_embed004_dim384_sp1024</span></td><td><span class='cell-text'>1.384210</span></td><td><span class='cell-text'>0.042040</span></td><td><span class='cell-text'>1093154.85</span></td><td><span class='cell-text'>likely harmful</span></td></tr><tr><td><span class='cell-text'>QK_GAIN_INIT</span></td><td><span class='cell-text'>1.25</span></td><td><span class='cell-text'>h100_qk_gain_125</span></td><td><span class='cell-text'>1.343021</span></td><td><span class='cell-text'>0.000851</span></td><td><span class='cell-text'>1072975.46</span></td><td><span class='cell-text'>inconclusive</span></td></tr><tr><td><span class='cell-text'>QK_GAIN_INIT</span></td><td><span class='cell-text'>1.75</span></td><td><span class='cell-text'>h100_qk_gain_175</span></td><td><span class='cell-text'>1.340999</span></td><td><span class='cell-text'>-0.001171</span></td><td><span class='cell-text'>1075771.50</span></td><td><span class='cell-text'>inconclusive</span></td></tr><tr><td><span class='cell-text'>SCALAR_LR</span></td><td><span class='cell-text'>0.03</span></td><td><span class='cell-text'>h100_scalar_lr_003</span></td><td><span class='cell-text'>1.335093</span></td><td><span class='cell-text'>-0.007077</span></td><td><span class='cell-text'>1055946.51</span></td><td><span class='cell-text'>inconclusive</span></td></tr><tr><td><span class='cell-text'>SEED</span></td><td><span class='cell-text'>1337</span></td><td><span class='cell-text'>h100_tp_gradacc4_gc10_muon0975_seed1337</span></td><td><span class='cell-text'>1.299712</span></td><td><span class='cell-text'>-0.042458</span></td><td><span class='cell-text'>1610864.29</span></td><td><span class='cell-text'>inconclusive</span></td></tr><tr><td><span class='cell-text'>SEED</span></td><td><span class='cell-text'>2024</span></td><td><span class='cell-text'>h100_tp_gradacc4_gc10_seed2024</span></td><td><span class='cell-text'>1.307945</span></td><td><span class='cell-text'>-0.034225</span></td><td><span class='cell-text'>1472595.01</span></td><td><span class='cell-text'>inconclusive</span></td></tr><tr><td><span class='cell-text'>TIED_EMBED_LR</span></td><td><span class='cell-text'>0.04</span></td><td><span class='cell-text'>h100_silu_embed004_sp1024</span></td><td><span class='cell-text'>1.341348</span></td><td><span class='cell-text'>-0.000822</span></td><td><span class='cell-text'>1071506.23</span></td><td><span class='cell-text'>inconclusive</span></td></tr><tr><td><span class='cell-text'>TRAIN_BATCH_TOKENS</span></td><td><span class='cell-text'>1048576</span></td><td><span class='cell-text'>h100_tp_batch1024k_gc10</span></td><td><span class='cell-text'>1.338948</span></td><td><span class='cell-text'>-0.003222</span></td><td><span class='cell-text'>1560868.72</span></td><td><span class='cell-text'>inconclusive</span></td></tr><tr><td><span class='cell-text'>TRAIN_BATCH_TOKENS</span></td><td><span class='cell-text'>786432</span></td><td><span class='cell-text'>h100_tp_batch786k_gc10</span></td><td><span class='cell-text'>1.325656</span></td><td><span class='cell-text'>-0.016514</span></td><td><span class='cell-text'>1446152.15</span></td><td><span class='cell-text'>inconclusive</span></td></tr></tbody></table></div>
+      </section>
+    </div>
+
+    <section class="section">
+      <h2>Non-Hparam Interventions</h2>
+      <div class='table-wrap'><table><thead><tr><th>category</th><th>best_quality_run</th><th>best_quality_bpb</th><th>fastest_run</th><th>fastest_tok_s</th></tr></thead><tbody><tr><td><span class='cell-text'>architecture_compact</span></td><td><span class='cell-text'>h100_silu_embed004_dim384_sp1024</span></td><td><span class='cell-text'>1.384210</span></td><td><span class='cell-text'>h100_silu_embed004_dim384_sp1024</span></td><td><span class='cell-text'>1093154.85</span></td></tr><tr><td><span class='cell-text'>architecture_variant</span></td><td><span class='cell-text'>h100_silu_sp1024</span></td><td><span class='cell-text'>1.351970</span></td><td><span class='cell-text'>h100_silu_sp1024</span></td><td><span class='cell-text'>1036982.54</span></td></tr><tr><td><span class='cell-text'>throughput_engineering</span></td><td><span class='cell-text'>h100_tp_gradacc4_gc10_seed1337_r2</span></td><td><span class='cell-text'>1.300142</span></td><td><span class='cell-text'>h100_tp_gradacc4_gc10_seed1337_r2</span></td><td><span class='cell-text'>1626354.81</span></td></tr></tbody></table></div>
+    </section>
+
+    <section class="section">
+      <h2>Run Table</h2>
+      <div class='table-wrap'><table><thead><tr><th>run_id</th><th>category</th><th>status</th><th>decision</th><th>val_bpb</th><th>tok_s</th><th>gpu_util_mean</th><th>vram_used_mean</th><th>peak_mem_reserved_mib</th><th>description</th></tr></thead><tbody><tr><td><span class='cell-text'>h100_baseline_sp1024</span></td><td><span class='cell-text'>confirmation</span></td><td><span class='cell-text'>keep</span></td><td><span class='cell-text'>keep</span></td><td><span class='cell-text'>1.342170</span></td><td><span class='cell-text'>1042135.60</span></td><td><span class='cell-text'></span></td><td><span class='cell-text'></span></td><td><span class='cell-text'>10,730</span></td><td><span class='cell-text'>Published train_gpt.py baseline on 1xH100</span></td></tr><tr><td><span class='cell-text'>h100_silu_sp1024</span></td><td><span class='cell-text'>architecture_variant</span></td><td><span class='cell-text'>discard</span></td><td><span class='cell-text'>discard</span></td><td><span class='cell-text'>1.351970</span></td><td><span class='cell-text'>1036982.54</span></td><td><span class='cell-text'></span></td><td><span class='cell-text'></span></td><td><span class='cell-text'>10,348</span></td><td><span class='cell-text'>Activation swap only: MLP_ACT=silu</span></td></tr><tr><td><span class='cell-text'>h100_silu_embed004_sp1024</span></td><td><span class='cell-text'>hparam_optimizer</span></td><td><span class='cell-text'>maybe</span></td><td><span class='cell-text'>retest</span></td><td><span class='cell-text'>1.341348</span></td><td><span class='cell-text'>1071506.23</span></td><td><span class='cell-text'></span></td><td><span class='cell-text'></span></td><td><span class='cell-text'>10,298</span></td><td><span class='cell-text'>Best local recipe so far: MLP_ACT=silu + TIED_EMBED_LR=0.04</span></td></tr><tr><td><span class='cell-text'>h100_silu_embed004_dim384_sp1024</span></td><td><span class='cell-text'>architecture_compact</span></td><td><span class='cell-text'>keep</span></td><td><span class='cell-text'>hold</span></td><td><span class='cell-text'>1.384210</span></td><td><span class='cell-text'>1093154.85</span></td><td><span class='cell-text'></span></td><td><span class='cell-text'></span></td><td><span class='cell-text'>7,944</span></td><td><span class='cell-text'>Compact architecture candidate: silu + tied_embed_lr=0.04 + dim384</span></td></tr><tr><td><span class='cell-text'>h100_baseline_sp1024_seed1337_r2</span></td><td><span class='cell-text'>confirmation</span></td><td><span class='cell-text'>ok</span></td><td><span class='cell-text'>keep</span></td><td><span class='cell-text'>1.343524</span></td><td><span class='cell-text'>1027049.05</span></td><td><span class='cell-text'></span></td><td><span class='cell-text'></span></td><td><span class='cell-text'>10,730</span></td><td><span class='cell-text'>Baseline rerun with same seed for noise estimation</span></td></tr><tr><td><span class='cell-text'>h100_baseline_sp1024_seed2024</span></td><td><span class='cell-text'>confirmation</span></td><td><span class='cell-text'>ok</span></td><td><span class='cell-text'>keep</span></td><td><span class='cell-text'>1.337999</span></td><td><span class='cell-text'>1060131.43</span></td><td><span class='cell-text'></span></td><td><span class='cell-text'></span></td><td><span class='cell-text'>10,554</span></td><td><span class='cell-text'>Baseline run with second seed for noise estimation</span></td></tr><tr><td><span class='cell-text'>h100_qk_gain_125</span></td><td><span class='cell-text'>hparam_optimizer</span></td><td><span class='cell-text'>ok</span></td><td><span class='cell-text'>pending</span></td><td><span class='cell-text'>1.343021</span></td><td><span class='cell-text'>1072975.46</span></td><td><span class='cell-text'>61.79%</span></td><td><span class='cell-text'>14.15%</span></td><td><span class='cell-text'>10,730</span></td><td><span class='cell-text'>QK gain 1.25</span></td></tr><tr><td><span class='cell-text'>h100_qk_gain_175</span></td><td><span class='cell-text'>hparam_optimizer</span></td><td><span class='cell-text'>ok</span></td><td><span class='cell-text'>pending</span></td><td><span class='cell-text'>1.340999</span></td><td><span class='cell-text'>1075771.50</span></td><td><span class='cell-text'>68.85%</span></td><td><span class='cell-text'>14.11%</span></td><td><span class='cell-text'>10,554</span></td><td><span class='cell-text'>QK gain 1.75</span></td></tr><tr><td><span class='cell-text'>h100_scalar_lr_003</span></td><td><span class='cell-text'>hparam_optimizer</span></td><td><span class='cell-text'>ok</span></td><td><span class='cell-text'>pending</span></td><td><span class='cell-text'>1.335093</span></td><td><span class='cell-text'>1055946.51</span></td><td><span class='cell-text'>60.97%</span></td><td><span class='cell-text'>13.90%</span></td><td><span class='cell-text'>10,554</span></td><td><span class='cell-text'>Scalar LR 0.03</span></td></tr><tr><td><span class='cell-text'>h100_grad_clip_10</span></td><td><span class='cell-text'>hparam_optimizer</span></td><td><span class='cell-text'>ok</span></td><td><span class='cell-text'>pending</span></td><td><span class='cell-text'>1.330568</span></td><td><span class='cell-text'>1135682.88</span></td><td><span class='cell-text'>69.03%</span></td><td><span class='cell-text'>13.90%</span></td><td><span class='cell-text'>10,554</span></td><td><span class='cell-text'>Grad clip 1.0</span></td></tr><tr><td><span class='cell-text'>h100_tp_batch786k_gc10</span></td><td><span class='cell-text'>throughput_engineering</span></td><td><span class='cell-text'>ok</span></td><td><span class='cell-text'>hold</span></td><td><span class='cell-text'>1.325656</span></td><td><span class='cell-text'>1446152.15</span></td><td><span class='cell-text'>78.12%</span></td><td><span class='cell-text'>19.14%</span></td><td><span class='cell-text'>15,212</span></td><td><span class='cell-text'>Train batch tokens 786432 with grad clip 1.0</span></td></tr><tr><td><span class='cell-text'>h100_tp_batch1024k_gc10</span></td><td><span class='cell-text'>throughput_engineering</span></td><td><span class='cell-text'>ok</span></td><td><span class='cell-text'>hold</span></td><td><span class='cell-text'>1.338948</span></td><td><span class='cell-text'>1560868.72</span></td><td><span class='cell-text'>82.59%</span></td><td><span class='cell-text'>25.39%</span></td><td><span class='cell-text'>20,854</span></td><td><span class='cell-text'>Train batch tokens 1048576 with grad clip 1.0</span></td></tr><tr><td><span class='cell-text'>h100_tp_gradacc4_gc10</span></td><td><span class='cell-text'>throughput_engineering</span></td><td><span class='cell-text'>ok</span></td><td><span class='cell-text'>promote</span></td><td><span class='cell-text'>1.308132</span></td><td><span class='cell-text'>1472016.17</span></td><td><span class='cell-text'>81.23%</span></td><td><span class='cell-text'>25.40%</span></td><td><span class='cell-text'>20,854</span></td><td><span class='cell-text'>Grad accum steps 4 with grad clip 1.0</span></td></tr><tr><td><span class='cell-text'>h100_logit_softcap_20</span></td><td><span class='cell-text'>hparam_schedule</span></td><td><span class='cell-text'>discard</span></td><td><span class='cell-text'>discard</span></td><td><span class='cell-text'>1.347154</span></td><td><span class='cell-text'>1048156.74</span></td><td><span class='cell-text'>65.22%</span></td><td><span class='cell-text'>14.14%</span></td><td><span class='cell-text'>10,554</span></td><td><span class='cell-text'>Logit softcap 20</span></td></tr><tr><td><span class='cell-text'>h100_logit_softcap_40</span></td><td><span class='cell-text'>hparam_schedule</span></td><td><span class='cell-text'>discard</span></td><td><span class='cell-text'>discard</span></td><td><span class='cell-text'>1.345383</span></td><td><span class='cell-text'>1015688.02</span></td><td><span class='cell-text'>65.85%</span></td><td><span class='cell-text'>14.12%</span></td><td><span class='cell-text'>10,554</span></td><td><span class='cell-text'>Logit softcap 40</span></td></tr><tr><td><span class='cell-text'>h100_muon_momentum_0975</span></td><td><span class='cell-text'>hparam_optimizer</span></td><td><span class='cell-text'>maybe</span></td><td><span class='cell-text'>retest</span></td><td><span class='cell-text'>1.332408</span></td><td><span class='cell-text'>1089905.21</span></td><td><span class='cell-text'>65.71%</span></td><td><span class='cell-text'>14.14%</span></td><td><span class='cell-text'>10,554</span></td><td><span class='cell-text'>Muon momentum 0.975</span></td></tr><tr><td><span class='cell-text'>h100_muon_warmup_1000</span></td><td><span class='cell-text'>hparam_optimizer</span></td><td><span class='cell-text'>discard</span></td><td><span class='cell-text'>discard</span></td><td><span class='cell-text'>1.337686</span></td><td><span class='cell-text'>1167237.35</span></td><td><span class='cell-text'>71.39%</span></td><td><span class='cell-text'>14.12%</span></td><td><span class='cell-text'>10,554</span></td><td><span class='cell-text'>Muon momentum warmup steps 1000</span></td></tr><tr><td><span class='cell-text'>h100_tp_gradacc4_gc10_seed1337_r2</span></td><td><span class='cell-text'>throughput_engineering</span></td><td><span class='cell-text'>keep</span></td><td><span class='cell-text'>promote</span></td><td><span class='cell-text'>1.300142</span></td><td><span class='cell-text'>1626354.81</span></td><td><span class='cell-text'>85.01%</span></td><td><span class='cell-text'>26.02%</span></td><td><span class='cell-text'>20,854</span></td><td><span class='cell-text'>Grad accum 4 plus grad clip 1.0 clean rerun</span></td></tr><tr><td><span class='cell-text'>h100_muon_momentum_0975_seed1337_r2</span></td><td><span class='cell-text'>hparam_optimizer</span></td><td><span class='cell-text'>keep</span></td><td><span class='cell-text'>keep_alt</span></td><td><span class='cell-text'>1.317526</span></td><td><span class='cell-text'>1333116.35</span></td><td><span class='cell-text'>77.41%</span></td><td><span class='cell-text'>14.15%</span></td><td><span class='cell-text'>10,730</span></td><td><span class='cell-text'>Muon momentum 0.975 clean rerun</span></td></tr><tr><td><span class='cell-text'>h100_tp_gradacc4_gc10_seed2024</span></td><td><span class='cell-text'>throughput_engineering</span></td><td><span class='cell-text'>keep</span></td><td><span class='cell-text'>confirm</span></td><td><span class='cell-text'>1.307945</span></td><td><span class='cell-text'>1472595.01</span></td><td><span class='cell-text'>85.94%</span></td><td><span class='cell-text'>26.02%</span></td><td><span class='cell-text'>20,854</span></td><td><span class='cell-text'>Grad accum 4 plus grad clip 1.0 second-seed confirmation</span></td></tr><tr><td><span class='cell-text'>h100_tp_gradacc4_gc10_muon0975_seed1337</span></td><td><span class='cell-text'>hparam_optimizer</span></td><td><span class='cell-text'>maybe</span></td><td><span class='cell-text'>hold</span></td><td><span class='cell-text'>1.299712</span></td><td><span class='cell-text'>1610864.29</span></td><td><span class='cell-text'>85.41%</span></td><td><span class='cell-text'>25.63%</span></td><td><span class='cell-text'>20,854</span></td><td><span class='cell-text'>Grad accum 4 plus grad clip 1.0 plus muon momentum 0.975</span></td></tr></tbody></table></div>
+      <p class="callout warning">Collection now covers raw quality, artifact size, derived throughput, GPU utilization, VRAM occupancy, power, temperature, and CUDA peak memory. The main remaining manual input is the live credit balance note.</p>
+    </section>
+  </main>
+</body>
+</html>

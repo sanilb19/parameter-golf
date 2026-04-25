@@ -11,6 +11,7 @@
 - Wide unattended local grids are unreliable on this machine unless tightly bracketed by nearby baselines
 - The most reliable local procedure is paired `baseline -> candidate -> baseline`
 - CUDA/H100 work must go through `train_gpt.py`, not only `train_gpt_mlx.py`
+- RunPod H100 pods must be created in `US-MO-1` with network volume `j2e4t9p20a` attached and mounted at `/workspace/persist`; `scripts/runpod_bootstrap.sh` uses the populated cache at `/workspace/persist/parameter-golf-cache` so future runs do not redownload the `sp1024` dataset.
 
 ## Reliable Findings
 
@@ -94,6 +95,12 @@
 - Search posture now:
   - scalar-only tuning is near diminishing returns
   - next valuable lanes are compact architecture, transfer to CUDA/H100, and later recurrence/quantization
+- RunPod/H100:
+  - always attach network volume `j2e4t9p20a` in `US-MO-1`
+  - always mount the volume at `/workspace/persist`
+  - always run the updated `scripts/runpod_bootstrap.sh` before training so `data/datasets`, `data/tokenizers`, and `HF_HOME` point to `/workspace/persist/parameter-golf-cache`
+  - use cheap CPU pods for volume/cache maintenance when possible; keep GPU pods off except for actual training runs
+  - use the auto-stop lifecycle runner so pods stop immediately after results are fetched
 
 ## Current Code State
 

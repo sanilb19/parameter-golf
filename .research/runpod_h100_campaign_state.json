@@ -1,0 +1,44 @@
+{
+  "saved_at": "2026-04-24",
+  "campaign": "h100_experiment_plan_and_dashboard_handoff",
+  "plan_path": ".research/plans/h100_experiment_plan_and_dashboard_handoff.md",
+  "ntfy_topic": "sb-parameter-golf-19",
+  "remaining_credit_note": "$30.36 after phase_1_knobs_b",
+  "runpod": {
+    "account_email": "sanil.baweja@gmail.com",
+    "recommended_template_id": "y5cejece4j",
+    "recommended_gpu_id": "NVIDIA H100 80GB HBM3",
+    "recommended_data_center_id": "US-MO-1",
+    "active_pod": {
+      "id": "27quqhxhu34yi7",
+      "name": "parameter-golf-h100-screen-01",
+      "ip": "64.247.201.51",
+      "ssh_port": 16990
+    },
+    "network_volume": {
+      "id": "j2e4t9p20a",
+      "name": "parameter-golf-h100-campaign-20260421",
+      "size_gb": 50,
+      "data_center_id": "US-MO-1",
+      "gpu_mount_path": "/workspace/persist",
+      "cpu_mount_path": "/workspace",
+      "cache_root_on_volume": "parameter-golf-cache",
+      "cache_root_on_gpu": "/workspace/persist/parameter-golf-cache",
+      "cache_contents": {
+        "sp1024_train_shards": 80,
+        "sp1024_val_shards": 1,
+        "tokenizer": "fineweb_1024_bpe.model"
+      }
+    }
+  },
+  "notes": [
+    "Attach the network volume when creating the 1xH100 pod.",
+    "Keep the pod in US-MO-1 to ensure the volume is attachable.",
+    "Mount the volume at /workspace/persist for GPU pods.",
+    "Run scripts/runpod_bootstrap.sh before training; it symlinks data/datasets and data/tokenizers to /workspace/persist/parameter-golf-cache and uses the persistent HF cache."
+  ],
+  "ops_policy": {
+    "volume_fetch_preference": "use cheap CPU pod when provider supports same-data-center volume attach; otherwise do shortest possible resume-fetch-stop on existing pod",
+    "gpu_startup_policy": "attach the US-MO-1 volume and use the populated persistent data cache before launching training"
+  }
+}

@@ -1,0 +1,22 @@
+commit	val_bpb	val_loss	artifact_int8_bytes	tok_s	status	description
+1f0fac01be2ebd56409cabc4ad2cdc3d53ac150e	0.00000000	0.00000000	0	0	crash	baseline seed 1337 run 1; MLX import aborted during Metal device initialization before training started
+c2f461379d6f9d939072568a7ee27f758e2e1e4c	9.93275667	16.77104358	5040849	6702	keep	baseline seed 1337 run 1; unmodified script run outside sandbox on Metal GPU
+8aff8d93f52163c8d57f12cb83248f5156293845	7.66305888	12.93875393	5108838	21065	keep	baseline seed 1337 run 2; unmodified script run outside sandbox on warmed Metal path
+714fe1052582df739c86fbf40524840e7b9c5fad	0.00000000	0.00000000	0	0	crash	baseline seed 1338 run 1; command fell back into sandbox and MLX could not enumerate Metal devices
+8382f619674b020a31ff316338d4f2556498c4bb	6.72339385	11.35216889	5130156	26510	keep	baseline seed 1337 run 3; unmodified script run outside sandbox on further warmed Metal path
+7b68fe0df0b9090663a112a0e736475f63bcdaac	2.30477171	3.89151048	9897212	7846	maybe	proxy baseline from README smoke config (`ITERATIONS=200`, `TRAIN_BATCH_TOKENS=8192`, `VAL_BATCH_SIZE=8192`)
+12641775103ed2b14f0c4010532542c7e129bd0c	2.37863099	4.01621880	11127690	14130	discard	proxy smoke screen with `QK_GAIN_INIT=1.25`; worse than proxy baseline on both `val_bpb` and artifact size
+d34bf7b6db28cb8f2ace6a14df6a4f8793145d1d	2.44043721	4.06830307	11262005	8349	maybe	fast proxy baseline with capped eval (`PROXY_VAL_BATCHES=2048`, `PROXY_SKIP_QUANT_EVAL=1`) on default hyperparameters
+56c1845aeb081de3d7c6968d7524121f9c979b47	2.41122899	4.01961184	11239422	9801	maybe	fast proxy screen with `QK_GAIN_INIT=1.75`; improved versus the fast proxy baseline on `val_bpb`, size, and throughput
+a48087dd91db1c2ea6e41f8bd0d0cd09320cbdb8	2.43602055	4.06094033	11293354	20909	maybe	fast proxy confirmation rerun for `QK_GAIN_INIT=1.75`; regressed toward the fast proxy baseline and did not confirm the earlier win
+a3037b4d32ae19fae8b890d9afba9366f42309d0	2.44366839	4.07368956	11295550	21689	discard	fast proxy screen with `MUON_MOMENTUM=0.97`; slightly worse than the fast proxy baseline and larger on artifact size
+79fd0bb11c8de4c282b2777553ca30f40e63aa80	2.40609621	4.01105530	11505080	21948	maybe	fast proxy screen with `SCALAR_LR=0.02`; strong `val_bpb` improvement versus the fast proxy baseline but with a larger compressed artifact
+2ee241a6c3a5c765b840e681dcda14af259df425	2.38628306	3.97802601	11330554	15947	keep	fast proxy confirmation rerun for `SCALAR_LR=0.02`; reproduced and improved the `val_bpb` gain versus the fast proxy baseline
+8f9d3247fc3162527d6ca58f732c1544ec8a4380	2.37371169	3.95706904	11189754	18958	maybe	fast proxy screen with `SCALAR_LR=0.02` and `GRAD_CLIP_NORM=1.0`; improved `val_bpb` and compressed artifact versus the current fast proxy base
+c7e28da9fe1bbf210c1b4b49ecf9d36158047358	2.35927199	3.93299751	11100841	14178	keep	fast proxy confirmation rerun for `SCALAR_LR=0.02` and `GRAD_CLIP_NORM=1.0`; reproduced and improved both `val_bpb` and compressed artifact
+383428f52bded56429d041b415bd2cf1a462a3a3	2.34026166	3.90130655	10900773	13416	maybe	fast proxy screen with `SCALAR_LR=0.02`, `GRAD_CLIP_NORM=1.0`, and `LOGIT_SOFTCAP=20.0`; strongest `val_bpb` and size so far on the proxy harness
+6ab3c0a783055d69c2a5efc640f949bb980dbd71	2.33443439	3.89159226	10829872	12621	keep	fast proxy confirmation rerun for `SCALAR_LR=0.02`, `GRAD_CLIP_NORM=1.0`, and `LOGIT_SOFTCAP=20.0`; reproduced and improved both `val_bpb` and compressed artifact
+208bbc14d25064bd7f03644bd997b76fd08123e3	1.30014199	2.19523530	14785037	1626354.81	keep	h100_tp_gradacc4_gc10_seed1337_r2; Grad accum 4 plus grad clip 1.0 clean rerun
+208bbc14d25064bd7f03644bd997b76fd08123e3	1.31752605	2.22458755	14857373	1333116.35	keep	h100_muon_momentum_0975_seed1337_r2; Muon momentum 0.975 clean rerun
+208bbc14d25064bd7f03644bd997b76fd08123e3	1.30794507	2.20841046	14455311	1472595.01	keep	h100_tp_gradacc4_gc10_seed2024; Grad accum 4 plus grad clip 1.0 second-seed confirmation
+208bbc14d25064bd7f03644bd997b76fd08123e3	1.29971188	2.19450906	15513390	1610864.29	maybe	h100_tp_gradacc4_gc10_muon0975_seed1337; Grad accum 4 plus grad clip 1.0 plus muon momentum 0.975

@@ -10,6 +10,10 @@ from pathlib import Path
 FINAL_EXACT_RE = re.compile(
     r"final_int8_zlib_roundtrip_exact val_loss:(?P<val_loss>[-+0-9.eE]+) val_bpb:(?P<val_bpb>[-+0-9.eE]+)"
 )
+FINAL_EVAL_RE = re.compile(
+    r"final_int8_zlib_roundtrip val_loss:(?P<val_loss>[-+0-9.eE]+) val_bpb:(?P<val_bpb>[-+0-9.eE]+) "
+    r"eval_time:(?P<eval_time_ms>\d+)ms"
+)
 TOTAL_BYTES_RE = re.compile(r"Total submission size int8\+zlib: (?P<bytes>\d+) bytes")
 MODEL_BYTES_RE = re.compile(r"Serialized model int8\+zlib: (?P<bytes>\d+) bytes")
 STOP_RE = re.compile(r"stopping_early: wallclock_cap train_time:(?P<train_time_ms>\d+)ms step:(?P<step>\d+)/(?P<iterations>\d+)")
@@ -17,6 +21,17 @@ STEP_RE = re.compile(
     r"step:(?P<step>\d+)/(?P<iterations>\d+) (?:train_loss|val_loss):.*train_time:(?P<train_time_ms>\d+)ms step_avg:(?P<step_avg_ms>[-+0-9.eE]+)ms"
 )
 PARAMS_RE = re.compile(r"model_params:(?P<model_params>\d+)")
+WORLD_RE = re.compile(r"world_size:(?P<world_size>\d+) grad_accum_steps:(?P<grad_accum_steps>\d+)")
+TRAIN_CFG_RE = re.compile(
+    r"train_batch_tokens:(?P<train_batch_tokens>\d+) train_seq_len:(?P<train_seq_len>\d+) "
+    r"iterations:(?P<iterations>\d+) warmup_steps:(?P<warmup_steps>\d+) "
+    r"max_wallclock_seconds:(?P<max_wallclock_seconds>[-+0-9.eE]+)"
+)
+MICROBATCH_RE = re.compile(r"train_microbatch_tokens_per_gpu:(?P<train_microbatch_tokens_per_gpu>\d+)")
+SEED_RE = re.compile(r"seed:(?P<seed>\d+)")
+PEAK_MEM_RE = re.compile(
+    r"peak memory allocated: (?P<peak_memory_allocated_mib>\d+) MiB reserved: (?P<peak_memory_reserved_mib>\d+) MiB"
+)
 
 
 def parse_train_log(path: Path) -> dict[str, object]:
@@ -33,6 +48,17 @@ def parse_train_log(path: Path) -> dict[str, object]:
         "iterations": None,
         "step_avg_ms": None,
         "model_params": None,
+        "world_size": None,
+        "grad_accum_steps": None,
+        "train_batch_tokens": None,
+        "train_seq_len": None,
+        "warmup_steps": None,
+        "max_wallclock_seconds": None,
+        "train_microbatch_tokens_per_gpu": None,
+        "seed": None,
+        "peak_memory_allocated_mib": None,
+        "peak_memory_reserved_mib": None,
+        "final_eval_time_ms": None,
     }
 
     final = None
@@ -80,6 +106,48 @@ def parse_train_log(path: Path) -> dict[str, object]:
         params = match
     if params is not None:
         out["model_params"] = int(params.group("model_params"))
+
+    world = None
+    for match in WORLD_RE.finditer(text):
+        world = match
+    if world is not None:
+        out["world_size"] = int(world.group("world_size"))
+        out["grad_accum_steps"] = int(world.group("grad_accum_steps"))
+
+    train_cfg = None
+    for match in TRAIN_CFG_RE.finditer(text):
+        train_cfg = match
+    if train_cfg is not None:
+        out["train_batch_tokens"] = int(train_cfg.group("train_batch_tokens"))
+        out["train_seq_len"] = int(train_cfg.group("train_seq_len"))
+        out["iterations"] = int(train_cfg.group("iterations"))
+        out["warmup_steps"] = int(train_cfg.group("warmup_steps"))
+        out["max_wallclock_seconds"] = float(train_cfg.group("max_wallclock_seconds"))
+
+    microbatch = None
+    for match in MICROBATCH_RE.finditer(text):
+        microbatch = match
+    if microbatch is not None:
+        out["train_microbatch_tokens_per_gpu"] = int(microbatch.group("train_microbatch_tokens_per_gpu"))
+
+    seed = None
+    for match in SEED_RE.finditer(text):
+        seed = match
+    if seed is not None:
+        out["seed"] = int(seed.group("seed"))
+
+    peak = None
+    for match in PEAK_MEM_RE.finditer(text):
+        peak = match
+    if peak is not None:
+        out["peak_memory_allocated_mib"] = int(peak.group("peak_memory_allocated_mib"))
+        out["peak_memory_reserved_mib"] = int(peak.group("peak_memory_reserved_mib"))
+
+    final_eval = None
+    for match in FINAL_EVAL_RE.finditer(text):
+        final_eval = match
+    if final_eval is not None:
+        out["final_eval_time_ms"] = int(final_eval.group("eval_time_ms"))
 
     return out
 

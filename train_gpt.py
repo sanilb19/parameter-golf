@@ -762,7 +762,9 @@ def main() -> None:
         raise ValueError(f"WORLD_SIZE must be positive, got {world_size}")
     if 8 % world_size != 0:
         raise ValueError(f"WORLD_SIZE={world_size} must divide 8 so grad_accum_steps stays integral")
-    grad_accum_steps = 8 // world_size
+    grad_accum_steps = int(os.environ.get("GRAD_ACCUM_STEPS", str(8 // world_size)))
+    if grad_accum_steps <= 0:
+        raise ValueError(f"GRAD_ACCUM_STEPS must be positive, got {grad_accum_steps}")
     grad_scale = 1.0 / grad_accum_steps
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA is required")
@@ -923,6 +925,9 @@ def main() -> None:
         f"train_batch_tokens:{args.train_batch_tokens} train_seq_len:{args.train_seq_len} "
         f"iterations:{args.iterations} warmup_steps:{args.warmup_steps} "
         f"max_wallclock_seconds:{args.max_wallclock_seconds:.3f}"
+    )
+    log0(
+        f"train_microbatch_tokens_per_gpu:{args.train_batch_tokens // (world_size * grad_accum_steps)}"
     )
     log0(f"seed:{args.seed}")
 
